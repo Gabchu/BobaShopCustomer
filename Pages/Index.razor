@@ -1,0 +1,38 @@
+﻿@page "/"
+
+<PageTitle>Index</PageTitle>
+@foreach (var Drink in ProductList)
+{
+	<div>
+		<h1>@Drink.Name</h1>
+		<h2>$@Drink.Price</h2>
+		<button @onclick=AddOrder>ORDER NOW</button>
+	</div>
+}
+
+
+@code {
+	public class Product
+	{
+		public string Name;
+		public int Price;
+		public Product(string name, int price)
+		{
+			Name = name;
+			Price = price;
+		}
+	}
+	List<Product> ProductList = new()
+	{
+		new Product("milktea",50),
+		new Product("coffee",40)
+	};
+
+	async Task AddOrder()
+	{
+		using HttpClient client = new HttpClient();
+		var result = await client.GetAsync("http://webcode.me");
+		Console.WriteLine(await result.Content.ReadAsStringAsync());
+
+	}
+}
