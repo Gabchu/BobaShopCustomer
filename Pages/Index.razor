@@ -1,12 +1,14 @@
 ﻿@page "/"
+@using Newtonsoft.Json;
+@using Orders;
 
 <PageTitle>Index</PageTitle>
 @foreach (var Drink in ProductList)
 {
 	<div>
-		<h1>@Drink.Name</h1>
-		<h2>$@Drink.Price</h2>
-		<button @onclick=AddOrder>ORDER NOW</button>
+		<h1>@Drink.Name</h1><h3>Order count: @Drink.Count</h3>
+		<button @onclick="() => add(Drink.Name)">+</button><h2>$@Drink.Price</h2><button @onclick="() => decrease(Drink.Name)">-</button>
+		<button @onclick="() => AddOrder(Drink.Name,Drink.Count)">Order Now</button>
 	</div>
 }
 
@@ -16,23 +18,44 @@
 	{
 		public string Name;
 		public int Price;
-		public Product(string name, int price)
+		public int Count;
+		public Product(string name, int price, int count)
 		{
 			Name = name;
 			Price = price;
+			Count = count;
 		}
 	}
+
+	List<OrderedProduct> orderedproducts = new();
+
 	List<Product> ProductList = new()
 	{
-		new Product("milktea",50),
-		new Product("coffee",40)
+		new Product("milktea",50,0),
+		new Product("coffee",40,0)
 	};
 
-	async Task AddOrder()
-	{
-		using HttpClient client = new HttpClient();
-		var result = await client.GetAsync("http://webcode.me");
-		Console.WriteLine(await result.Content.ReadAsStringAsync());
 
+	public void add(string productname)
+	{
+		foreach (var product in ProductList)
+			if (product.Name == productname)
+				product.Count++;
+	}
+
+	public void decrease(string productname)
+	{
+		foreach (var product in ProductList)
+			if (product.Name == productname)
+				product.Count--;
+	}
+
+	async Task AddOrder(string productname,int count)
+	{
+		BobaShopCustomer.Orders.Order order = new Orders.Order() { ProductName = productname , Count = count};
+		string orderjson = JsonConvert.SerializeObject(order);
+		using HttpClient client = new HttpClient();
+		var result = await client.PostAsync("https://localhost:7104/api/Values", new StringContent(orderjson, System.Text.Encoding.UTF8, "application/json"));
+		Console.WriteLine(await result.Content.ReadAsStringAsync());
 	}
 }
