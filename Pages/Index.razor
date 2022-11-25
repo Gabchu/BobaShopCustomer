@@ -6,11 +6,16 @@
 @foreach (var Drink in ProductList)
 {
 	<div>
-		<h1>@Drink.Name</h1><h3>Order count: @Drink.Count</h3>
+		<h1>@Drink.Name</h1>
 		<button @onclick="() => add(Drink.Name)">+</button><h2>$@Drink.Price</h2><button @onclick="() => decrease(Drink.Name)">-</button>
-		<button @onclick="() => AddOrder(Drink.Name,Drink.Count)">Order Now</button>
 	</div>
 }
+@foreach (var product in orderedProducts)
+{
+	<h3>@product.Productname ordered: @product.Count</h3>
+	<button @onclick="() => AddOrder(product.Productname,product.Count)">Order Now</button>
+}
+
 
 
 @code {
@@ -18,41 +23,61 @@
 	{
 		public string Name;
 		public int Price;
-		public int Count;
-		public Product(string name, int price, int count)
+		public Product(string name, int price)
 		{
 			Name = name;
 			Price = price;
-			Count = count;
 		}
 	}
 
-	List<OrderedProduct> orderedproducts = new();
-
-	List<Product> ProductList = new()
-	{
-		new Product("milktea",50,0),
-		new Product("coffee",40,0)
-	};
-
+	public List<OrderedProduct> orderedProducts = new();
 
 	public void add(string productname)
 	{
-		foreach (var product in ProductList)
-			if (product.Name == productname)
-				product.Count++;
+		if (!isExist(productname))
+		{
+			orderedProducts.Add(new OrderedProduct(){Productname = productname});
+			GetExistedProduct(productname).Count++;
+		}
+		else
+		{
+			GetExistedProduct(productname).Count++;
+		}
 	}
 
 	public void decrease(string productname)
 	{
-		foreach (var product in ProductList)
-			if (product.Name == productname)
-				product.Count--;
+		if (isExist(productname))
+		{
+			if (GetExistedProduct(productname).Count > 1)
+				GetExistedProduct(productname).Count--;
+		}
+	}
+	public OrderedProduct GetExistedProduct(string productname)
+	{
+		foreach (var product in orderedProducts)
+			if (product.Productname == productname)
+				return product;
+		return null;
 	}
 
-	async Task AddOrder(string productname,int count)
+	public bool isExist(string productname)
 	{
-		BobaShopCustomer.Orders.Order order = new Orders.Order() { ProductName = productname , Count = count};
+		foreach (var product in orderedProducts)
+			if (product.Productname == productname)
+				return true;
+		return false;
+	}
+
+	List<Product> ProductList = new()
+	{
+		new Product("milktea",50),
+		new Product("coffee",40)
+	};
+
+	async Task AddOrder(string productname, int count)
+	{
+		BobaShopCustomer.Orders.OrderedProduct order = new Orders.OrderedProduct() { Productname = productname , Count = count };
 		string orderjson = JsonConvert.SerializeObject(order);
 		using HttpClient client = new HttpClient();
 		var result = await client.PostAsync("https://localhost:7104/api/Values", new StringContent(orderjson, System.Text.Encoding.UTF8, "application/json"));
