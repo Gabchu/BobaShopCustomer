@@ -2,8 +2,8 @@
 {
     public class OrderedProduct
     {
-        public string? Productname;
-        public int Count;
-    }
+		public string? ProductName { get; set; }
+		public int Count { get; set; }
+	}
 }
 

@@ -2,7 +2,8 @@
 @using Newtonsoft.Json;
 @using Orders;
 
-<PageTitle>Index</PageTitle>
+<PageTitle>BobaShop</PageTitle>
+
 @foreach (var Drink in ProductList)
 {
 	<div>
@@ -12,9 +13,9 @@
 }
 @foreach (var product in orderedProducts)
 {
-	<h3>@product.Productname ordered: @product.Count</h3>
-	<button @onclick="() => AddOrder(product.Productname,product.Count)">Order Now</button>
+	<h3>@product.ProductName ordered: @product.Count</h3>
 }
+<button @onclick="()=> FinalAddOrder()">BUY</button>
 
 
 
@@ -36,7 +37,7 @@
 	{
 		if (!isExist(productname))
 		{
-			orderedProducts.Add(new OrderedProduct(){Productname = productname});
+			orderedProducts.Add(new OrderedProduct(){ProductName = productname});
 			GetExistedProduct(productname).Count++;
 		}
 		else
@@ -49,14 +50,16 @@
 	{
 		if (isExist(productname))
 		{
-			if (GetExistedProduct(productname).Count > 1)
-				GetExistedProduct(productname).Count--;
+			GetExistedProduct(productname).Count--;
+			if (GetExistedProduct(productname).Count <= 0)
+				orderedProducts.Remove(GetExistedProduct(productname));
 		}
 	}
+
 	public OrderedProduct GetExistedProduct(string productname)
 	{
 		foreach (var product in orderedProducts)
-			if (product.Productname == productname)
+			if (product.ProductName == productname)
 				return product;
 		return null;
 	}
@@ -64,7 +67,7 @@
 	public bool isExist(string productname)
 	{
 		foreach (var product in orderedProducts)
-			if (product.Productname == productname)
+			if (product.ProductName == productname)
 				return true;
 		return false;
 	}
@@ -75,10 +78,9 @@
 		new Product("coffee",40)
 	};
 
-	async Task AddOrder(string productname, int count)
+	async Task FinalAddOrder()
 	{
-		BobaShopCustomer.Orders.OrderedProduct order = new Orders.OrderedProduct() { Productname = productname , Count = count };
-		string orderjson = JsonConvert.SerializeObject(order);
+		string orderjson = JsonConvert.SerializeObject(orderedProducts);
 		using HttpClient client = new HttpClient();
 		var result = await client.PostAsync("https://localhost:7104/api/Values", new StringContent(orderjson, System.Text.Encoding.UTF8, "application/json"));
 		Console.WriteLine(await result.Content.ReadAsStringAsync());
